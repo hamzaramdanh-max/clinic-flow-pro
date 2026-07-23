@@ -1,0 +1,48 @@
+{% extends 'accounts/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 mt-5">
+        <div class="card shadow-sm border-success">
+            <div class="card-header bg-success text-white fw-bold">
+                👨‍⚕️ {{ title|default:_("Add New Doctor") }}
+            </div>
+            <div class="card-body py-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "Select User Account" %}</label>
+                        {{ form.user }}
+                        <small class="text-muted">{% trans "Must be an existing user with 'Doctor' role." %}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "Department" %}</label>
+                        {{ form.department }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "Specialization" %}</label>
+                        {{ form.specialization }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "Consultation Fees" %}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light fw-bold text-success">{{ clinic_settings.currency }}</span>
+                            {{ form.consultation_fees }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'accounts:doctors_list' %}" class="btn btn-secondary px-4">{% trans "Cancel" %}</a>
+                        <button type="submit" class="btn btn-success px-4">{% trans "Save Doctor" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

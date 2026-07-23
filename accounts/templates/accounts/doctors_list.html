@@ -1,0 +1,79 @@
+{% extends 'accounts/base.html' %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="fas fa-user-md text-primary"></i> {% trans "Doctors Management" %}</h2>
+    <a href="{% url 'accounts:add_doctor' %}" class="btn btn-success fw-bold">
+        <i class="fas fa-plus"></i> {% trans "Add New Doctor" %}
+    </a>
+</div>
+
+<!-- Search Bar -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2">
+            <div class="col-md-10">
+                <input type="text" name="q" value="{{ query }}" class="form-control" 
+                       placeholder="🔍 {% trans 'Search by doctor name or specialization...' %}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> {% trans "Search" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>{% trans "Doctor Name" %}</th>
+                    <th>{% trans "Department" %}</th>
+                    <th>{% trans "Specialization" %}</th>
+                    <th>{% trans "Fees" %}</th>
+                    <th class="text-center">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doctor in doctors %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="fw-bold">{% trans "Dr." %} {{ doctor.user.username }}</td>
+                    <td><span class="badge bg-primary">{{ doctor.department.name|default:_("General") }}</span></td>
+                    <td>{{ doctor.specialization }}</td>
+                    <td class="text-success fw-bold">{{ doctor.consultation_fees }} {{ currency }}</td>
+                    <td class="text-center">
+                        {% if doctor.pk %}
+                            <a href="{% url 'accounts:view_doctor' pk=doctor.pk %}" class="btn btn-sm btn-info text-white">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                            <a href="{% url 'accounts:edit_doctor' pk=doctor.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                            </a>
+                            <a href="{% url 'accounts:delete_doctor' pk=doctor.pk %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> {% trans "Delete" %}
+                            </a>
+                        {% else %}
+                            <span class="text-danger">{% trans "Invalid Doctor" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="fas fa-user-md fa-2x mb-2"></i><br>
+                        {% trans "No doctors found. Click 'Add New Doctor' to start." %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

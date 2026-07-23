@@ -1,0 +1,173 @@
+{% extends 'accounts/base.html' %}
+{% load i18n %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="fas fa-calendar-check text-warning"></i> {% trans "Appointment Details" %}</h2>
+    <div>
+        <a href="{% url 'accounts:appointments_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+        </a>
+        <a href="{% url 'accounts:edit_appointment' appointment.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> {% trans "Edit" %}
+        </a>
+        <a href="{% url 'accounts:delete_appointment' appointment.pk %}" class="btn btn-danger">
+            <i class="fas fa-times"></i> {% trans "Cancel" %}
+        </a>
+    </div>
+</div>
+
+<!-- Main Appointment Card -->
+<div class="card shadow-lg border-0 mb-4">
+    <div class="card-header bg-warning text-dark p-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-hashtag"></i> {{ appointment.appointment_number }}
+                </h4>
+                <small>{% trans "Created on" %} {{ appointment.created_at|date:"Y-m-d H:i" }}</small>
+            </div>
+            <div>
+                {% if appointment.status == 'Pending' %}
+                    <span class="badge bg-secondary p-2 fs-6">
+                        <i class="fas fa-hourglass-half"></i> {% trans "Pending" %}
+                    </span>
+                {% elif appointment.status == 'Confirmed' %}
+                    <span class="badge bg-primary p-2 fs-6">
+                        <i class="fas fa-check"></i> {% trans "Confirmed" %}
+                    </span>
+                {% elif appointment.status == 'Completed' %}
+                    <span class="badge bg-success p-2 fs-6">
+                        <i class="fas fa-check-double"></i> {% trans "Completed" %}
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger p-2 fs-6">
+                        <i class="fas fa-times"></i> {% trans "Cancelled" %}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Patient Info -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user"></i> {% trans "Patient Information" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px; font-size: 40px;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+                <h4 class="text-center fw-bold mb-3">{{ appointment.patient.name }}</h4>
+                <hr>
+                <p class="mb-2">
+                    <i class="fas fa-phone text-success"></i> 
+                    <strong>{% trans "Phone:" %}</strong> {{ appointment.patient.phone }}
+                </p>
+                <p class="mb-2">
+                    <i class="fas fa-envelope text-primary"></i> 
+                    <strong>{% trans "Email:" %}</strong> {{ appointment.patient.email|default:_("Not provided") }}
+                </p>
+                <div class="mt-3">
+                    <a href="{% url 'accounts:view_patient' appointment.patient.pk %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-eye"></i> {% trans "View Full Profile" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Info -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user-md"></i> {% trans "Doctor Information" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px; font-size: 40px;">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                </div>
+                <h4 class="text-center fw-bold mb-1">
+                    {% trans "Dr." %} {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}
+                </h4>
+                <p class="text-muted text-center mb-3">{{ appointment.doctor.specialization }}</p>
+                <hr>
+                <p class="mb-2">
+                    <i class="fas fa-hospital text-primary"></i> 
+                    <strong>{% trans "Department:" %}</strong> {{ appointment.doctor.department.name|default:_("General") }}
+                </p>
+                <p class="mb-2">
+                    <i class="fas fa-money-bill-wave text-success"></i> 
+                    <strong>{% trans "Fees:" %}</strong> 
+                    <span class="text-success fw-bold">{{ appointment.doctor.consultation_fees }} {{ currency }}
+                    </span>
+                </p>
+                <div class="mt-3">
+                    <a href="{% url 'accounts:view_doctor' appointment.doctor.pk %}" class="btn btn-outline-success w-100">
+                        <i class="fas fa-eye"></i> {% trans "View Doctor Profile" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Timing -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> {% trans "Appointment Schedule" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="fas fa-calendar-day fa-3x text-warning mb-2"></i>
+                            <h6 class="text-muted mb-1">{% trans "Date" %}</h6>
+                            <h4 class="fw-bold">{{ appointment.date_time|date:"l" }}</h4>
+                            <p class="mb-0">{{ appointment.date_time|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border-start border-end">
+                            <i class="fas fa-clock fa-3x text-primary mb-2"></i>
+                            <h6 class="text-muted mb-1">{% trans "Time" %}</h6>
+                            <h4 class="fw-bold">{{ appointment.date_time|date:"h:i A" }}</h4>
+                            <p class="mb-0 text-muted">{% trans "Local Time" %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="fas fa-stopwatch fa-3x text-success mb-2"></i>
+                            <h6 class="text-muted mb-1">{% trans "Status" %}</h6>
+                            {% if appointment.status == 'Pending' %}
+                                <h4 class="fw-bold text-warning">{% trans "Pending" %}</h4>
+                            {% elif appointment.status == 'Confirmed' %}
+                                <h4 class="fw-bold text-info">{% trans "Confirmed" %}</h4>
+                            {% elif appointment.status == 'Completed' %}
+                                <h4 class="fw-bold text-success">{% trans "Completed" %}</h4>
+                            {% else %}
+                                <h4 class="fw-bold text-danger">{% trans "Cancelled" %}</h4>
+                            {% endif %}
+                            <p class="mb-0 text-muted">{% trans "Current State" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

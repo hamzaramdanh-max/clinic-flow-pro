@@ -1,0 +1,186 @@
+{% extends 'accounts/base.html' %}
+{% load i18n %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="fas fa-file-invoice-dollar text-danger"></i> {% trans "Invoice Details" %}</h2>
+    <div>
+        <a href="{% url 'accounts:invoices_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+        </a>
+        <a href="{% url 'accounts:print_invoice' invoice.pk %}" target="_blank" class="btn btn-dark">
+            <i class="fas fa-print"></i> {% trans "Print" %}
+        </a>
+        <a href="{% url 'accounts:edit_invoice' invoice.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> {% trans "Edit" %}
+        </a>
+        <a href="{% url 'accounts:delete_invoice' invoice.pk %}" class="btn btn-danger">
+            <i class="fas fa-trash"></i> {% trans "Delete" %}
+        </a>
+    </div>
+</div>
+
+<!-- Payment Status Banner -->
+{% if invoice.is_paid %}
+<div class="alert alert-success d-flex align-items-center shadow-sm">
+    <i class="fas fa-check-circle fa-2x me-3"></i>
+    <div>
+        <strong>{% trans "Paid!" %}</strong> {% trans "This invoice has been fully paid." %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-danger d-flex align-items-center shadow-sm">
+    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+    <div>
+        <strong>{% trans "Unpaid!" %}</strong> {% trans "This invoice is pending payment." %}
+        {% if invoice.due_date %}
+            {% trans "Due date:" %} <strong>{{ invoice.due_date|date:"Y-m-d" }}</strong>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Main Invoice Card -->
+<div class="card shadow-lg border-0 mb-4">
+    <div class="card-header {% if invoice.is_paid %}bg-success{% else %}bg-danger{% endif %} text-white p-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-receipt"></i> {{ invoice.invoice_number }}
+                </h4>
+                <small>{% trans "Created on" %} {{ invoice.created_at|date:"Y-m-d H:i" }}</small>
+            </div>
+            <div>
+                {% if invoice.is_paid %}
+                    <span class="badge bg-white text-success p-2 fs-6">
+                        <i class="fas fa-check-circle"></i> {% trans "PAID" %}
+                    </span>
+                {% else %}
+                    <span class="badge bg-white text-danger p-2 fs-6">
+                        <i class="fas fa-times-circle"></i> {% trans "UNPAID" %}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Patient Info -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user"></i> {% trans "Patient Information" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px; font-size: 40px;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+                <h4 class="text-center fw-bold mb-3">{{ invoice.patient.name }}</h4>
+                <hr>
+                <p class="mb-2">
+                    <i class="fas fa-phone text-success"></i> 
+                    <strong>{% trans "Phone:" %}</strong> {{ invoice.patient.phone }}
+                </p>
+                <p class="mb-2">
+                    <i class="fas fa-envelope text-primary"></i> 
+                    <strong>{% trans "Email:" %}</strong> {{ invoice.patient.email|default:_("Not provided") }}
+                </p>
+                <div class="mt-3">
+                    <a href="{% url 'accounts:view_patient' invoice.patient.pk %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-eye"></i> {% trans "View Full Profile" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Info -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user-md"></i> {% trans "Doctor Information" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                {% if invoice.doctor %}
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center" 
+                             style="width: 80px; height: 80px; font-size: 40px;">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                    </div>
+                    <h4 class="text-center fw-bold mb-1">
+                        {% trans "Dr." %} {{ invoice.doctor.user.get_full_name|default:invoice.doctor.user.username }}
+                    </h4>
+                    <p class="text-muted text-center mb-3">{{ invoice.doctor.specialization }}</p>
+                    <hr>
+                    <p class="mb-2">
+                        <i class="fas fa-hospital text-primary"></i> 
+                        <strong>{% trans "Department:" %}</strong> {{ invoice.doctor.department.name|default:_("General") }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-money-bill-wave text-success"></i> 
+                        <strong>{% trans "Consultation Fees:" %}</strong> {{ invoice.doctor.consultation_fees }} {{ currency }}
+                    </p>
+                    <div class="mt-3">
+                        <a href="{% url 'accounts:view_doctor' invoice.doctor.pk %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-eye"></i> {% trans "View Doctor Profile" %}
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-user-slash fa-3x mb-2"></i>
+                        <p>{% trans "No doctor assigned" %}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Details -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-dollar-sign"></i> {% trans "Payment Details" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="fas fa-money-bill-wave fa-3x text-success mb-2"></i>
+                            <h6 class="text-muted mb-1">{% trans "Total Amount" %}</h6>
+                            <h2 class="fw-bold text-success">{{ invoice.amount }} {{ currency }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border-start border-end">
+                            <i class="fas fa-calendar-day fa-3x text-warning mb-2"></i>
+                            <h6 class="text-muted mb-1">{% trans "Due Date" %}</h6>
+                            <h4 class="fw-bold">{{ invoice.due_date|date:"Y-m-d"|default:_("Not set") }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <i class="fas fa-info-circle fa-3x {% if invoice.is_paid %}text-success{% else %}text-danger{% endif %} mb-2"></i>
+                            <h6 class="text-muted mb-1">{% trans "Payment Status" %}</h6>
+                            {% if invoice.is_paid %}
+                                <h4 class="fw-bold text-success">{% trans "Paid" %}</h4>
+                            {% else %}
+                                <h4 class="fw-bold text-danger">{% trans "Unpaid" %}</h4>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

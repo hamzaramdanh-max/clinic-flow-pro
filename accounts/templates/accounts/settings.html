@@ -1,0 +1,528 @@
+{% extends 'accounts/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<style>
+    /* ========== Settings Page Custom Styles ========== */
+    .settings-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .settings-tabs .nav-link:hover {
+        color: var(--primary-color);
+        border-bottom-color: rgba(0,0,0,0.1);
+        background-color: transparent;
+    }
+    .settings-tabs .nav-link.active {
+        color: var(--primary-color) !important;
+        border-bottom-color: var(--primary-color) !important;
+        background-color: transparent !important;
+        font-weight: 600;
+    }
+    
+    .color-picker-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .color-picker-wrapper input[type="color"] {
+        width: 60px;
+        height: 45px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 3px;
+    }
+    .color-hex-input {
+        max-width: 140px;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .color-presets {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+    .color-preset {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #dee2e6;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .color-preset:hover {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 2px var(--primary-color);
+    }
+    .color-preset.active::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .color-preview-box {
+        margin-top: 15px;
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px dashed #dee2e6;
+        background-color: rgba(0,0,0,0.02);
+    }
+    body.dark-mode .color-preview-box {
+        background-color: rgba(255,255,255,0.03);
+        border-color: #3d3d3d;
+    }
+    .preview-navbar {
+        padding: 10px 15px;
+        border-radius: 6px;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .preview-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .dark-mode-card {
+        background: linear-gradient(135deg, rgba(13, 110, 253, 0.05), rgba(13, 110, 253, 0.02));
+        border: 2px solid rgba(13, 110, 253, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 15px;
+    }
+    body.dark-mode .dark-mode-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+        border-color: rgba(255,255,255,0.1);
+    }
+    .form-check-input:checked {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+    }
+    .form-check-input {
+        width: 3rem !important;
+        height: 1.5rem !important;
+        cursor: pointer;
+    }
+    
+    .section-header {
+        color: var(--primary-color);
+        font-weight: bold;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--primary-color);
+        display: inline-block;
+    }
+    
+    .save-btn-wrapper {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 15px 0;
+        margin-top: 20px;
+        border-top: 2px solid #e9ecef;
+        z-index: 10;
+    }
+    body.dark-mode .save-btn-wrapper {
+        background: #1e1e1e;
+        border-top-color: #2d2d2d;
+    }
+</style>
+
+<div class="card shadow-lg border-0">
+    <div class="card-header bg-dark text-white p-3">
+        <h3 class="mb-0"><i class="fas fa-cog"></i> {% trans "Clinic Settings" %}</h3>
+        <small class="text-light">{% trans "Manage all your clinic preferences and configurations" %}</small>
+    </div>
+
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs settings-tabs mb-4" id="settingsTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#clinic-info" type="button">
+                        <i class="fas fa-hospital"></i> {% trans "Clinic Info" %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#financial" type="button">
+                        <i class="fas fa-dollar-sign"></i> {% trans "Financial" %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#appearance" type="button">
+                        <i class="fas fa-palette"></i> {% trans "Appearance" %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#notifications" type="button">
+                        <i class="fas fa-bell"></i> {% trans "Notifications" %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#smtp" type="button">
+                        <i class="fas fa-envelope"></i> {% trans "Email (SMTP)" %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#system" type="button">
+                        <i class="fas fa-server"></i> {% trans "System" %}
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tabs Content -->
+            <div class="tab-content">
+
+                <!-- 1. Clinic Info -->
+                <div class="tab-pane fade show active" id="clinic-info">
+                    <h5 class="section-header"><i class="fas fa-hospital"></i> {% trans "Basic Information" %}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">{% trans "Clinic Name" %}</label>
+                            {{ form.clinic_name }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{% trans "Logo" %}</label>
+                            {{ form.logo }}
+                            {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="Logo" class="mt-2" style="max-height: 60px;">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "Phone" %}</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "Email" %}</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">{% trans "Website" %}</label>
+                            {{ form.website }}
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">{% trans "Address" %}</label>
+                            {{ form.address }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Financial -->
+                <div class="tab-pane fade" id="financial">
+                    <h5 class="section-header"><i class="fas fa-dollar-sign"></i> {% trans "Financial Settings" %}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "Currency" %}</label>
+                            {{ form.currency }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "Invoice Prefix" %}</label>
+                            {{ form.invoice_prefix }}
+                            <small class="text-muted">{% trans "e.g. INV- → INV-1001" %}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "Default Tax (%)" %}</label>
+                            {{ form.default_tax }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "Default Discount (%)" %}</label>
+                            {{ form.default_discount }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Appearance -->
+                <div class="tab-pane fade" id="appearance">
+                    <h5 class="section-header"><i class="fas fa-palette"></i> {% trans "Appearance & Theme" %}</h5>
+                    
+                    <div class="row g-4">
+                        <!-- Language -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-language text-primary"></i> {% trans "Language" %}
+                            </label>
+                            {{ form.language }}
+                            <small class="text-muted d-block mt-1">{% trans "Choose your preferred language" %}</small>
+                        </div>
+
+                        <!-- Primary Color -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-paint-brush text-primary"></i> {% trans "Primary Color" %}
+                            </label>
+                            
+                            <div class="color-picker-wrapper">
+                                <input 
+                                    type="color" 
+                                    id="colorPickerVisual" 
+                                    value="{{ settings.primary_color|default:'#0d6efd' }}"
+                                    title="{% trans 'Choose color' %}"
+                                >
+                                <input 
+                                    type="text" 
+                                    class="form-control color-hex-input" 
+                                    id="colorHexDisplay" 
+                                    value="{{ settings.primary_color|default:'#0d6efd' }}"
+                                    readonly
+                                >
+                            </div>
+
+                            <!-- Hidden Original Field -->
+                            <div style="display: none;">
+                                {{ form.primary_color }}
+                            </div>
+
+                            <!-- Color Presets -->
+                            <div class="mt-3">
+                                <small class="text-muted d-block mb-2">
+                                    <i class="fas fa-magic"></i> {% trans "Quick Presets:" %}
+                                </small>
+                                <div class="color-presets">
+                                    <div class="color-preset" data-color="#0d6efd" style="background: #0d6efd;" title="{% trans 'Blue' %}"></div>
+                                    <div class="color-preset" data-color="#198754" style="background: #198754;" title="{% trans 'Green' %}"></div>
+                                    <div class="color-preset" data-color="#dc3545" style="background: #dc3545;" title="{% trans 'Red' %}"></div>
+                                    <div class="color-preset" data-color="#6f42c1" style="background: #6f42c1;" title="{% trans 'Purple' %}"></div>
+                                    <div class="color-preset" data-color="#e83e8c" style="background: #e83e8c;" title="{% trans 'Pink' %}"></div>
+                                    <div class="color-preset" data-color="#fd7e14" style="background: #fd7e14;" title="{% trans 'Orange' %}"></div>
+                                    <div class="color-preset" data-color="#20c997" style="background: #20c997;" title="{% trans 'Teal' %}"></div>
+                                    <div class="color-preset" data-color="#0dcaf0" style="background: #0dcaf0;" title="{% trans 'Cyan' %}"></div>
+                                    <div class="color-preset" data-color="#212529" style="background: #212529;" title="{% trans 'Dark' %}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Preview -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-eye text-primary"></i> {% trans "Live Preview" %}
+                            </label>
+                            <div class="color-preview-box">
+                                <div class="preview-navbar" id="previewNavbar" style="background-color: {{ settings.primary_color|default:'#0d6efd' }};">
+                                    <i class="fas fa-heartbeat"></i> {% trans "ClinicFlow Pro Preview" %}
+                                </div>
+                                <div class="preview-buttons">
+                                    <button type="button" class="btn btn-sm" id="previewBtnPrimary" style="background-color: {{ settings.primary_color|default:'#0d6efd' }}; color: white;">
+                                        <i class="fas fa-plus"></i> {% trans "Primary Button" %}
+                                    </button>
+                                    <button type="button" class="btn btn-sm" id="previewBtnOutline" style="border: 2px solid {{ settings.primary_color|default:'#0d6efd' }}; color: {{ settings.primary_color|default:'#0d6efd' }}; background: transparent;">
+                                        <i class="fas fa-star"></i> {% trans "Outline Button" %}
+                                    </button>
+                                    <span class="badge" id="previewBadge" style="background-color: {{ settings.primary_color|default:'#0d6efd' }}; color: white; padding: 8px 12px;">
+                                        {% trans "Badge Sample" %}
+                                    </span>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> {% trans "Save settings to apply the changes site-wide" %}
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Dark Mode -->
+                        <div class="col-md-12">
+                            <div class="dark-mode-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-check-label fw-bold mb-1" style="font-size: 1.1rem;">
+                                            <i class="fas fa-moon text-primary"></i> {% trans "Dark Mode" %}
+                                        </label>
+                                        <small class="text-muted d-block">{% trans "Enable dark theme for reduced eye strain" %}</small>
+                                    </div>
+                                    <div class="form-check form-switch mb-0">
+                                        {{ form.dark_mode }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Notifications -->
+                <div class="tab-pane fade" id="notifications">
+                    <h5 class="section-header"><i class="fas fa-bell"></i> {% trans "Notifications" %}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="dark-mode-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-check-label fw-bold mb-1">
+                                            <i class="fas fa-envelope text-primary"></i> {% trans "Email Notifications" %}
+                                        </label>
+                                        <small class="text-muted d-block">{% trans "Send email alerts for important events" %}</small>
+                                    </div>
+                                    <div class="form-check form-switch mb-0">
+                                        {{ form.enable_email_notifications }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="dark-mode-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-check-label fw-bold mb-1">
+                                            <i class="fas fa-calendar-check text-primary"></i> {% trans "Appointment Reminders" %}
+                                        </label>
+                                        <small class="text-muted d-block">{% trans "Automatic reminders for upcoming appointments" %}</small>
+                                    </div>
+                                    <div class="form-check form-switch mb-0">
+                                        {{ form.enable_appointment_reminders }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-exclamation-triangle text-warning"></i> {% trans "Low Stock Alert Threshold" %}
+                            </label>
+                            {{ form.low_stock_threshold }}
+                            <small class="text-muted">{% trans "Alert when medicine stock is below this number" %}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. SMTP -->
+                <div class="tab-pane fade" id="smtp">
+                    <h5 class="section-header"><i class="fas fa-envelope"></i> {% trans "Email (SMTP) Configuration" %}</h5>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        {% blocktrans %}For Gmail, use an <strong>App Password</strong>, not your real password.{% endblocktrans %}
+                        <a href="https://support.google.com/accounts/answer/185833" target="_blank" class="alert-link">{% trans "Learn how" %}</a>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "SMTP Email" %}</label>
+                            {{ form.smtp_email }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "SMTP Password" %}</label>
+                            {{ form.smtp_password }}
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">{% trans "SMTP Host" %}</label>
+                            {{ form.smtp_host }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{% trans "SMTP Port" %}</label>
+                            {{ form.smtp_port }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. System -->
+                <div class="tab-pane fade" id="system">
+                    <h5 class="section-header"><i class="fas fa-server"></i> {% trans "System Configuration" %}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-globe text-primary"></i> {% trans "Timezone" %}
+                            </label>
+                            {{ form.timezone }}
+                            <small class="text-muted">{% trans "e.g. Africa/Cairo, Asia/Riyadh, UTC" %}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-clock text-success"></i> {% trans "Working Hours From" %}
+                            </label>
+                            {{ form.working_hours_from }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-clock text-danger"></i> {% trans "Working Hours To" %}
+                            </label>
+                            {{ form.working_hours_to }}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Save Button -->
+            <div class="save-btn-wrapper d-flex justify-content-end">
+                <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg px-4">
+                    <i class="fas fa-save"></i> {% trans "Save Settings" %}
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorPickerVisual = document.getElementById('colorPickerVisual');
+        const colorHexDisplay = document.getElementById('colorHexDisplay');
+        const originalField = document.querySelector('input[name="primary_color"]');
+        const colorPresets = document.querySelectorAll('.color-preset');
+        
+        const previewNavbar = document.getElementById('previewNavbar');
+        const previewBtnPrimary = document.getElementById('previewBtnPrimary');
+        const previewBtnOutline = document.getElementById('previewBtnOutline');
+        const previewBadge = document.getElementById('previewBadge');
+
+        function updatePreview(color) {
+            colorHexDisplay.value = color.toUpperCase();
+            colorPickerVisual.value = color;
+            if (originalField) originalField.value = color;
+            
+            if (previewNavbar) previewNavbar.style.backgroundColor = color;
+            if (previewBtnPrimary) previewBtnPrimary.style.backgroundColor = color;
+            if (previewBtnOutline) {
+                previewBtnOutline.style.borderColor = color;
+                previewBtnOutline.style.color = color;
+            }
+            if (previewBadge) previewBadge.style.backgroundColor = color;
+            
+            colorPresets.forEach(preset => {
+                if (preset.dataset.color.toLowerCase() === color.toLowerCase()) {
+                    preset.classList.add('active');
+                } else {
+                    preset.classList.remove('active');
+                }
+            });
+        }
+
+        const initialColor = colorPickerVisual.value;
+        updatePreview(initialColor);
+
+        colorPickerVisual.addEventListener('input', function() {
+            updatePreview(this.value);
+        });
+
+        colorPresets.forEach(preset => {
+            preset.addEventListener('click', function() {
+                updatePreview(this.dataset.color);
+            });
+        });
+
+        if (originalField) {
+            originalField.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
