@@ -163,7 +163,7 @@ LOCALE_PATHS = [
 STATIC_URL = '/static/'
 
 # للـ Development
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
 
 # للـ Production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
