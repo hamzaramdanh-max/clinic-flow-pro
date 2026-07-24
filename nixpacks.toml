@@ -1,5 +1,6 @@
 [phases.setup]
-nixPkgs = ["python311", "gcc", "postgresql"]
+nixPkgs = ["python311", "gcc", "postgresql", "openssl"]
+aptPkgs = ["libpq-dev"]
 
 [phases.install]
 cmds = [
@@ -14,4 +15,4 @@ cmds = [
 ]
 
 [start]
-cmd = ". /opt/venv/bin/activate && python manage.py migrate --noinput && gunicorn core.wsgi --log-file -"
+cmd = ". /opt/venv/bin/activate && python manage.py migrate --noinput && gunicorn core.wsgi --bind 0.0.0.0:$PORT --log-file -"
