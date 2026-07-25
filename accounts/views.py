@@ -35,6 +35,12 @@ def settings_view(request):
     settings_obj = ClinicSettings.get_settings()
 
     if request.method == 'POST':
+        # Handle logo delete
+        if request.POST.get('logo-clear') and settings_obj.logo:
+            settings_obj.logo.delete(save=False)
+            settings_obj.logo = None
+            settings_obj.save()
+        
         form = SettingsForm(request.POST, request.FILES, instance=settings_obj)
         if form.is_valid():
             form.save()

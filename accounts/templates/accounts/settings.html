@@ -241,12 +241,22 @@
                             {{ form.clinic_name }}
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">{% trans "Logo" %}</label>
-                            {{ form.logo }}
-                            {% if settings.logo %}
-                                <img src="{{ settings.logo.url }}" alt="Logo" class="mt-2 rounded" style="max-height: 60px;">
-                            {% endif %}
-                        </div>
+    <label class="form-label fw-bold">{% trans "Logo" %}</label>
+    {{ form.logo }}
+    {% if settings.logo %}
+        <div class="mt-2">
+            <a href="{{ settings.logo.url }}" target="_blank" title="{% trans 'Click to view full size' %}">
+                <img src="{{ settings.logo.url }}" alt="Logo" class="rounded shadow-sm" style="max-height: 80px; cursor: pointer;">
+            </a>
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" name="logo-clear" id="logo-clear_id">
+                <label class="form-check-label text-danger" for="logo-clear_id">
+                    <i class="fas fa-trash"></i> {% trans "Delete current logo" %}
+                </label>
+            </div>
+        </div>
+    {% endif %}
+</div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">{% trans "Phone" %}</label>
                             {{ form.phone }}
