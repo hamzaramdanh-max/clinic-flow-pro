@@ -52,13 +52,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # ☁️ Cloudinary - لتخزين الصور
+    'cloudinary_storage',
+    'cloudinary',
+    
     'accounts',
     'clinic',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ جديد: عشان Static Files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ عشان Static Files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'clinic.middleware.ForceClinicLanguageMiddleware',
@@ -176,6 +181,19 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ==================================================================
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# ==================================================================
+# ☁️ Cloudinary Configuration (لتخزين الصور في السحابة)
+# ==================================================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
+}
+
+# استخدم Cloudinary في Production (لو الـ variables موجودة)
+if os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ==================================================================
 # ⚙️ Default primary key field type
