@@ -141,8 +141,8 @@ class SettingsForm(forms.ModelForm):
             'logo': forms.FileInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('Full clinic address')}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+20 100 000 0000'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'info@clinic.com'}),
-            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://yourclinic.com'}),
+            'email': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'info@clinic.com'}),
+            'website': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'https://yourclinic.com'}),
             
             'currency': forms.Select(attrs={'class': 'form-select'}),
             'default_tax': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
@@ -157,7 +157,7 @@ class SettingsForm(forms.ModelForm):
             'low_stock_threshold': forms.NumberInput(attrs={'class': 'form-control'}),
             'enable_appointment_reminders': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             
-            'smtp_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your-email@gmail.com'}),
+            'smtp_email': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'your-email@gmail.com'}),
             'smtp_password': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': _('App Password'), 'render_value': True}),
             'smtp_host': forms.TextInput(attrs={'class': 'form-control'}),
             'smtp_port': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -166,3 +166,24 @@ class SettingsForm(forms.ModelForm):
             'working_hours_from': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'working_hours_to': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional (not required)
+        for field_name, field in self.fields.items():
+            field.required = False
+    
+    def clean_website(self):
+        """Allow any text in website field"""
+        website = self.cleaned_data.get('website', '')
+        return website if website else ''
+    
+    def clean_email(self):
+        """Allow any text in email field"""
+        email = self.cleaned_data.get('email', '')
+        return email if email else ''
+    
+    def clean_smtp_email(self):
+        """Allow any text in smtp_email field"""
+        smtp_email = self.cleaned_data.get('smtp_email', '')
+        return smtp_email if smtp_email else ''
