@@ -549,39 +549,90 @@
     
     // Update preview and all UI elements
     function updatePreview(color) {
-        if (!isValidHex(color)) {
-            color = DEFAULT_COLOR;
-        }
-        
-        color = color.toUpperCase();
-        
-        // Update inputs
-        colorHexDisplay.value = color;
-        colorPickerVisual.value = color.toLowerCase();
-        primaryColorInput.value = color;
-        
-        // Update preview
-        if (previewNavbar) previewNavbar.style.backgroundColor = color;
-        if (previewBtnPrimary) previewBtnPrimary.style.backgroundColor = color;
-        if (previewBtnOutline) {
-            previewBtnOutline.style.borderColor = color;
-            previewBtnOutline.style.border = '2px solid ' + color;
-            previewBtnOutline.style.color = color;
-        }
-        if (previewBadge) previewBadge.style.backgroundColor = color;
-        
-        // Update active preset
-        colorPresets.forEach(preset => {
-            if (preset.dataset.color.toUpperCase() === color) {
-                preset.classList.add('active');
-            } else {
-                preset.classList.remove('active');
-            }
-        });
-        
-        // Live update the entire page (optional)
-        document.documentElement.style.setProperty('--primary-color', color);
+    if (!isValidHex(color)) {
+        color = DEFAULT_COLOR;
     }
+    
+    color = color.toUpperCase();
+    
+    // Update inputs
+    colorHexDisplay.value = color;
+    colorPickerVisual.value = color.toLowerCase();
+    primaryColorInput.value = color;
+    
+    // Calculate contrast
+    function getContrast(hex) {
+        const h = hex.replace('#', '');
+        const r = parseInt(h.substr(0, 2), 16);
+        const g = parseInt(h.substr(2, 2), 16);
+        const b = parseInt(h.substr(4, 2), 16);
+        return (r * 299 + g * 587 + b * 114) / 1000;
+    }
+    
+    function darken(hex, pct) {
+        const h = hex.replace('#', '');
+        let r = parseInt(h.substr(0, 2), 16);
+        let g = parseInt(h.substr(2, 2), 16);
+        let b = parseInt(h.substr(4, 2), 16);
+        r = Math.max(0, Math.floor(r * (1 - pct / 100)));
+        g = Math.max(0, Math.floor(g * (1 - pct / 100)));
+        b = Math.max(0, Math.floor(b * (1 - pct / 100)));
+        return '#' + r.toString(16).padStart(2, '0') + 
+                     g.toString(16).padStart(2, '0') + 
+                     b.toString(16).padStart(2, '0');
+    }
+    
+    const brightness = getContrast(color);
+    const isLight = brightness > 200;
+    const textColor = brightness > 155 ? '#000000' : '#ffffff';
+    const displayColor = isLight ? darken(color, 30) : color;
+    
+    // Update preview - use display color for visibility
+    if (previewNavbar) {
+        previewNavbar.style.backgroundColor = displayColor;
+        previewNavbar.style.color = textColor;
+    }
+    if (previewBtnPrimary) {
+        previewBtnPrimary.style.backgroundColor = displayColor;
+        previewBtnPrimary.style.color = textColor;
+    }
+    if (previewBtnOutline) {
+        previewBtnOutline.style.borderColor = displayColor;
+        previewBtnOutline.style.border = '2px solid ' + displayColor;
+        previewBtnOutline.style.color = displayColor;
+    }
+    if (previewBadge) {
+        previewBadge.style.backgroundColor = displayColor;
+        previewBadge.style.color = textColor;
+    }
+    
+    // Update active preset
+    colorPresets.forEach(preset => {
+        if (preset.dataset.color.toUpperCase() === color) {
+            preset.classList.add('active');
+        } else {
+            preset.classList.remove('active');
+        }
+    });
+    
+    // Live update the entire page
+    document.documentElement.style.setProperty('--primary-color', displayColor);
+    document.documentElement.style.setProperty('--nav-text-color', textColor);
+    
+    // Show warning if color is too light
+    let warning = document.getElementById('colorWarning');
+    if (isLight) {
+        if (!warning) {
+            warning = document.createElement('div');
+            warning.id = 'colorWarning';
+            warning.className = 'alert alert-warning mt-2 mb-0';
+            warning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> {% trans "This color is very light! We darkened it slightly for better visibility." %}';
+            colorHexDisplay.parentElement.parentElement.appendChild(warning);
+        }
+    } else if (warning) {
+        warning.remove();
+    }
+}
     
     // Initialize
     updatePreview(colorPickerVisual.value);
