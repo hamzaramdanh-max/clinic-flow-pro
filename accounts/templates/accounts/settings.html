@@ -156,7 +156,7 @@
     </div>
 
     <div class="card-body p-4">
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
             <!-- Tabs Navigation -->
@@ -475,6 +475,18 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Remove HTML5 validation from all form fields
+        const form = document.querySelector('form');
+        if (form) {
+            const inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.removeAttribute('required');
+                if (input.type === 'url') {
+                    input.type = 'text';
+                }
+            });
+        }
+
         const colorPickerVisual = document.getElementById('colorPickerVisual');
         const colorHexDisplay = document.getElementById('colorHexDisplay');
         const originalField = document.querySelector('input[name="primary_color"]');
