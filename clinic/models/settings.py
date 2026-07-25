@@ -8,8 +8,8 @@ class ClinicSettings(BaseModel):
     logo = models.ImageField(upload_to='clinic_logos/', null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    website = models.URLField(blank=True, null=True)
+    email = models.CharField(max_length=255, blank=True, null=True)
+    website = models.CharField(max_length=255, blank=True, null=True)
     
     # ==================== Financial Settings ====================
     CURRENCY_CHOICES = (
@@ -41,7 +41,7 @@ class ClinicSettings(BaseModel):
     enable_appointment_reminders = models.BooleanField(default=True)
     
     # ==================== SMTP Settings ====================
-    smtp_email = models.EmailField(blank=True, null=True)
+    smtp_email = models.CharField(max_length=255, blank=True, null=True)
     smtp_password = models.CharField(max_length=255, blank=True, null=True)
     smtp_host = models.CharField(max_length=100, default="smtp.gmail.com", blank=True)
     smtp_port = models.IntegerField(default=587)
