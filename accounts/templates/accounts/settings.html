@@ -3,7 +3,7 @@
 
 {% block content %}
 <style>
-    /* ========== Settings Page Custom Styles ========== */
+    /* ========== Settings Page Styles ========== */
     .settings-tabs .nav-link {
         color: #6c757d;
         border: none;
@@ -15,7 +15,6 @@
     .settings-tabs .nav-link:hover {
         color: var(--primary-color);
         border-bottom-color: rgba(0,0,0,0.1);
-        background-color: transparent;
     }
     .settings-tabs .nav-link.active {
         color: var(--primary-color) !important;
@@ -23,7 +22,8 @@
         background-color: transparent !important;
         font-weight: 600;
     }
-    
+
+    /* Color Picker */
     .color-picker-wrapper {
         display: flex;
         align-items: center;
@@ -44,7 +44,8 @@
         font-weight: bold;
         text-transform: uppercase;
     }
-    
+
+    /* Color Presets */
     .color-presets {
         display: flex;
         gap: 8px;
@@ -63,7 +64,9 @@
     }
     .color-preset:hover {
         transform: scale(1.15);
-        box-shadow: 0 0 0 2px var(--primary-color);
+    }
+    .color-preset.active {
+        box-shadow: 0 0 0 3px var(--primary-color);
     }
     .color-preset.active::after {
         content: '✓';
@@ -76,7 +79,8 @@
         font-size: 16px;
         text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     }
-    
+
+    /* Live Preview */
     .color-preview-box {
         margin-top: 15px;
         padding: 20px;
@@ -89,11 +93,11 @@
         border-color: #3d3d3d;
     }
     .preview-navbar {
-        padding: 10px 15px;
+        padding: 12px 15px;
         border-radius: 6px;
         color: white;
         font-weight: bold;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -103,18 +107,25 @@
         gap: 8px;
         flex-wrap: wrap;
     }
-    
-    .dark-mode-card {
-        background: linear-gradient(135deg, rgba(13, 110, 253, 0.05), rgba(13, 110, 253, 0.02));
-        border: 2px solid rgba(13, 110, 253, 0.1);
+
+    /* Toggle Cards */
+    .toggle-card {
+        background: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.01));
+        border: 2px solid rgba(0,0,0,0.05);
         border-radius: 12px;
         padding: 20px;
         margin-top: 15px;
+        transition: all 0.3s ease;
     }
-    body.dark-mode .dark-mode-card {
+    .toggle-card:hover {
+        border-color: var(--primary-color);
+    }
+    body.dark-mode .toggle-card {
         background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
         border-color: rgba(255,255,255,0.1);
     }
+
+    /* Form Switches */
     .form-check-input:checked {
         background-color: var(--primary-color) !important;
         border-color: var(--primary-color) !important;
@@ -124,7 +135,8 @@
         height: 1.5rem !important;
         cursor: pointer;
     }
-    
+
+    /* Section Header */
     .section-header {
         color: var(--primary-color);
         font-weight: bold;
@@ -133,7 +145,8 @@
         border-bottom: 2px solid var(--primary-color);
         display: inline-block;
     }
-    
+
+    /* Save Button */
     .save-btn-wrapper {
         position: sticky;
         bottom: 0;
@@ -147,6 +160,30 @@
         background: #1e1e1e;
         border-top-color: #2d2d2d;
     }
+
+    /* Loading Spinner */
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+        opacity: 0.7;
+    }
+    .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 
 <div class="card shadow-lg border-0">
@@ -156,11 +193,11 @@
     </div>
 
     <div class="card-body p-4">
-        <form method="POST" enctype="multipart/form-data" novalidate>
+        <form method="POST" enctype="multipart/form-data" novalidate id="settingsForm">
             {% csrf_token %}
 
             <!-- Tabs Navigation -->
-            <ul class="nav nav-tabs settings-tabs mb-4" id="settingsTabs" role="tablist">
+            <ul class="nav nav-tabs settings-tabs mb-4" role="tablist">
                 <li class="nav-item">
                     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#clinic-info" type="button">
                         <i class="fas fa-hospital"></i> {% trans "Clinic Info" %}
@@ -193,7 +230,6 @@
                 </li>
             </ul>
 
-            <!-- Tabs Content -->
             <div class="tab-content">
 
                 <!-- 1. Clinic Info -->
@@ -208,7 +244,7 @@
                             <label class="form-label fw-bold">{% trans "Logo" %}</label>
                             {{ form.logo }}
                             {% if settings.logo %}
-                                <img src="{{ settings.logo.url }}" alt="Logo" class="mt-2" style="max-height: 60px;">
+                                <img src="{{ settings.logo.url }}" alt="Logo" class="mt-2 rounded" style="max-height: 60px;">
                             {% endif %}
                         </div>
                         <div class="col-md-6">
@@ -286,14 +322,16 @@
                                     class="form-control color-hex-input" 
                                     id="colorHexDisplay" 
                                     value="{{ settings.primary_color|default:'#0d6efd' }}"
-                                    readonly
+                                    maxlength="7"
+                                    pattern="^#[0-9A-Fa-f]{6}$"
                                 >
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="resetColorBtn" title="{% trans 'Reset to Default' %}">
+                                    <i class="fas fa-undo"></i>
+                                </button>
                             </div>
 
                             <!-- Hidden Original Field -->
-                            <div style="display: none;">
-                                {{ form.primary_color }}
-                            </div>
+                            <input type="hidden" name="primary_color" id="primaryColorInput" value="{{ settings.primary_color|default:'#0d6efd' }}">
 
                             <!-- Color Presets -->
                             <div class="mt-3">
@@ -301,15 +339,15 @@
                                     <i class="fas fa-magic"></i> {% trans "Quick Presets:" %}
                                 </small>
                                 <div class="color-presets">
-                                    <div class="color-preset" data-color="#0d6efd" style="background: #0d6efd;" title="{% trans 'Blue' %}"></div>
-                                    <div class="color-preset" data-color="#198754" style="background: #198754;" title="{% trans 'Green' %}"></div>
-                                    <div class="color-preset" data-color="#dc3545" style="background: #dc3545;" title="{% trans 'Red' %}"></div>
-                                    <div class="color-preset" data-color="#6f42c1" style="background: #6f42c1;" title="{% trans 'Purple' %}"></div>
-                                    <div class="color-preset" data-color="#e83e8c" style="background: #e83e8c;" title="{% trans 'Pink' %}"></div>
-                                    <div class="color-preset" data-color="#fd7e14" style="background: #fd7e14;" title="{% trans 'Orange' %}"></div>
-                                    <div class="color-preset" data-color="#20c997" style="background: #20c997;" title="{% trans 'Teal' %}"></div>
-                                    <div class="color-preset" data-color="#0dcaf0" style="background: #0dcaf0;" title="{% trans 'Cyan' %}"></div>
-                                    <div class="color-preset" data-color="#212529" style="background: #212529;" title="{% trans 'Dark' %}"></div>
+                                    <div class="color-preset" data-color="#0d6efd" style="background: #0d6efd;" title="Blue"></div>
+                                    <div class="color-preset" data-color="#198754" style="background: #198754;" title="Green"></div>
+                                    <div class="color-preset" data-color="#dc3545" style="background: #dc3545;" title="Red"></div>
+                                    <div class="color-preset" data-color="#6f42c1" style="background: #6f42c1;" title="Purple"></div>
+                                    <div class="color-preset" data-color="#e83e8c" style="background: #e83e8c;" title="Pink"></div>
+                                    <div class="color-preset" data-color="#fd7e14" style="background: #fd7e14;" title="Orange"></div>
+                                    <div class="color-preset" data-color="#20c997" style="background: #20c997;" title="Teal"></div>
+                                    <div class="color-preset" data-color="#0dcaf0" style="background: #0dcaf0;" title="Cyan"></div>
+                                    <div class="color-preset" data-color="#212529" style="background: #212529;" title="Dark"></div>
                                 </div>
                             </div>
                         </div>
@@ -320,17 +358,17 @@
                                 <i class="fas fa-eye text-primary"></i> {% trans "Live Preview" %}
                             </label>
                             <div class="color-preview-box">
-                                <div class="preview-navbar" id="previewNavbar" style="background-color: {{ settings.primary_color|default:'#0d6efd' }};">
+                                <div class="preview-navbar" id="previewNavbar">
                                     <i class="fas fa-heartbeat"></i> {% trans "ClinicFlow Pro Preview" %}
                                 </div>
                                 <div class="preview-buttons">
-                                    <button type="button" class="btn btn-sm" id="previewBtnPrimary" style="background-color: {{ settings.primary_color|default:'#0d6efd' }}; color: white;">
+                                    <button type="button" class="btn btn-sm" id="previewBtnPrimary" style="color: white;">
                                         <i class="fas fa-plus"></i> {% trans "Primary Button" %}
                                     </button>
-                                    <button type="button" class="btn btn-sm" id="previewBtnOutline" style="border: 2px solid {{ settings.primary_color|default:'#0d6efd' }}; color: {{ settings.primary_color|default:'#0d6efd' }}; background: transparent;">
+                                    <button type="button" class="btn btn-sm" id="previewBtnOutline" style="background: transparent;">
                                         <i class="fas fa-star"></i> {% trans "Outline Button" %}
                                     </button>
-                                    <span class="badge" id="previewBadge" style="background-color: {{ settings.primary_color|default:'#0d6efd' }}; color: white; padding: 8px 12px;">
+                                    <span class="badge" id="previewBadge" style="color: white; padding: 8px 12px;">
                                         {% trans "Badge Sample" %}
                                     </span>
                                 </div>
@@ -342,7 +380,7 @@
 
                         <!-- Dark Mode -->
                         <div class="col-md-12">
-                            <div class="dark-mode-card">
+                            <div class="toggle-card">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-check-label fw-bold mb-1" style="font-size: 1.1rem;">
@@ -364,7 +402,7 @@
                     <h5 class="section-header"><i class="fas fa-bell"></i> {% trans "Notifications" %}</h5>
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <div class="dark-mode-card">
+                            <div class="toggle-card">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-check-label fw-bold mb-1">
@@ -379,7 +417,7 @@
                             </div>
                         </div>
                         <div class="col-md-12">
-                            <div class="dark-mode-card">
+                            <div class="toggle-card">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-check-label fw-bold mb-1">
@@ -464,7 +502,7 @@
                 <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary me-2">
                     <i class="fas fa-arrow-left"></i> {% trans "Back" %}
                 </a>
-                <button type="submit" class="btn btn-primary btn-lg px-4">
+                <button type="submit" class="btn btn-primary btn-lg px-4" id="saveBtn">
                     <i class="fas fa-save"></i> {% trans "Save Settings" %}
                 </button>
             </div>
@@ -474,67 +512,128 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Remove HTML5 validation from all form fields
-        const form = document.querySelector('form');
-        if (form) {
-            const inputs = form.querySelectorAll('input, textarea, select');
-            inputs.forEach(input => {
-                input.removeAttribute('required');
-                if (input.type === 'url') {
-                    input.type = 'text';
-                }
-            });
-        }
-
-        const colorPickerVisual = document.getElementById('colorPickerVisual');
-        const colorHexDisplay = document.getElementById('colorHexDisplay');
-        const originalField = document.querySelector('input[name="primary_color"]');
-        const colorPresets = document.querySelectorAll('.color-preset');
-        
-        const previewNavbar = document.getElementById('previewNavbar');
-        const previewBtnPrimary = document.getElementById('previewBtnPrimary');
-        const previewBtnOutline = document.getElementById('previewBtnOutline');
-        const previewBadge = document.getElementById('previewBadge');
-
-        function updatePreview(color) {
-            colorHexDisplay.value = color.toUpperCase();
-            colorPickerVisual.value = color;
-            if (originalField) originalField.value = color;
-            
-            if (previewNavbar) previewNavbar.style.backgroundColor = color;
-            if (previewBtnPrimary) previewBtnPrimary.style.backgroundColor = color;
-            if (previewBtnOutline) {
-                previewBtnOutline.style.borderColor = color;
-                previewBtnOutline.style.color = color;
+(function() {
+    'use strict';
+    
+    const DEFAULT_COLOR = '#0d6efd';
+    
+    // Elements
+    const form = document.getElementById('settingsForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const colorPickerVisual = document.getElementById('colorPickerVisual');
+    const colorHexDisplay = document.getElementById('colorHexDisplay');
+    const primaryColorInput = document.getElementById('primaryColorInput');
+    const resetColorBtn = document.getElementById('resetColorBtn');
+    const colorPresets = document.querySelectorAll('.color-preset');
+    
+    const previewNavbar = document.getElementById('previewNavbar');
+    const previewBtnPrimary = document.getElementById('previewBtnPrimary');
+    const previewBtnOutline = document.getElementById('previewBtnOutline');
+    const previewBadge = document.getElementById('previewBadge');
+    
+    // Remove HTML5 validation
+    if (form) {
+        const inputs = form.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            input.removeAttribute('required');
+            if (input.type === 'url' || input.type === 'email') {
+                input.type = 'text';
             }
-            if (previewBadge) previewBadge.style.backgroundColor = color;
-            
-            colorPresets.forEach(preset => {
-                if (preset.dataset.color.toLowerCase() === color.toLowerCase()) {
-                    preset.classList.add('active');
-                } else {
-                    preset.classList.remove('active');
-                }
-            });
+        });
+    }
+    
+    // Validate HEX color
+    function isValidHex(color) {
+        return /^#[0-9A-Fa-f]{6}$/.test(color);
+    }
+    
+    // Update preview and all UI elements
+    function updatePreview(color) {
+        if (!isValidHex(color)) {
+            color = DEFAULT_COLOR;
         }
-
-        const initialColor = colorPickerVisual.value;
-        updatePreview(initialColor);
-
-        colorPickerVisual.addEventListener('input', function() {
-            updatePreview(this.value);
-        });
-
+        
+        color = color.toUpperCase();
+        
+        // Update inputs
+        colorHexDisplay.value = color;
+        colorPickerVisual.value = color.toLowerCase();
+        primaryColorInput.value = color;
+        
+        // Update preview
+        if (previewNavbar) previewNavbar.style.backgroundColor = color;
+        if (previewBtnPrimary) previewBtnPrimary.style.backgroundColor = color;
+        if (previewBtnOutline) {
+            previewBtnOutline.style.borderColor = color;
+            previewBtnOutline.style.border = '2px solid ' + color;
+            previewBtnOutline.style.color = color;
+        }
+        if (previewBadge) previewBadge.style.backgroundColor = color;
+        
+        // Update active preset
         colorPresets.forEach(preset => {
-            preset.addEventListener('click', function() {
-                updatePreview(this.dataset.color);
-            });
+            if (preset.dataset.color.toUpperCase() === color) {
+                preset.classList.add('active');
+            } else {
+                preset.classList.remove('active');
+            }
         });
-
-        if (originalField) {
-            originalField.style.display = 'none';
+        
+        // Live update the entire page (optional)
+        document.documentElement.style.setProperty('--primary-color', color);
+    }
+    
+    // Initialize
+    updatePreview(colorPickerVisual.value);
+    
+    // Color picker change
+    colorPickerVisual.addEventListener('input', function() {
+        updatePreview(this.value);
+    });
+    
+    // HEX input change
+    colorHexDisplay.addEventListener('input', function() {
+        let value = this.value.trim();
+        if (!value.startsWith('#')) {
+            value = '#' + value;
+        }
+        if (isValidHex(value)) {
+            updatePreview(value);
         }
     });
+    
+    // Color presets click
+    colorPresets.forEach(preset => {
+        preset.addEventListener('click', function() {
+            updatePreview(this.dataset.color);
+        });
+    });
+    
+    // Reset button
+    if (resetColorBtn) {
+        resetColorBtn.addEventListener('click', function() {
+            updatePreview(DEFAULT_COLOR);
+        });
+    }
+    
+    // Form submit with loading
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (saveBtn) {
+                saveBtn.classList.add('btn-loading');
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {% trans "Saving..." %}';
+            }
+        });
+    }
+    
+    // Keyboard shortcut Ctrl+S to save
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            if (form) form.submit();
+        }
+    });
+})();
 </script>
 {% endblock %}
